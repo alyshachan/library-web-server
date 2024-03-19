@@ -85,14 +85,9 @@ namespace LibraryWebServer.Controllers
         public ActionResult AllTitles()
         {
 
-            // TODO: Implement
-            //string titles = "[";
-            //Team107LibraryContext db = new Team107LibraryContext();
+
             using (Team107LibraryContext db = new Team107LibraryContext())
             {
-
-
-
                 //left outer joined all tables
                 var allTitlesQuery = from books in db.Titles
                                      join inventory in db.Inventory on books.Isbn equals inventory.Isbn into join1
@@ -109,41 +104,6 @@ namespace LibraryWebServer.Controllers
                                          serial = inventory.Serial == null ? null : (uint?)inventory.Serial,
                                          name = patron.Name == null ? "" : (String)patron.Name
                                      };
-                /*            int i = 0;
-                            int total = allTitlesQuery.Count()-1;
-                            foreach (var p in allTitlesQuery) 
-                            {
-
-                                *//*                System.Diagnostics.Debug.WriteLine(p.books.Title);
-                                                System.Diagnostics.Debug.WriteLine(p.books.Isbn);
-                                                System.Diagnostics.Debug.WriteLine(p.books.Author);
-                                                if (p.inventory== null) System.Diagnostics.Debug.WriteLine("no serial");
-                                                else Debug.WriteLine(p.inventory.Serial);
-                                                if (p.patron == null) System.Diagnostics.Debug.WriteLine("no patron checked it out");
-                                                else System.Diagnostics.Debug.WriteLine(p.patron.Name);
-                                                System.Diagnostics.Debug.WriteLine("\n");*//*
-
-                                titles += "\n{";
-
-                                titles += $"\"isbn\":\"{p.books.Isbn}\",";
-                                titles += $"\"title\":\"{p.books.Title}\",";
-                                titles += $"\"author\":\"{p.books.Author}\",";
-
-                                if (p.inventory == null) titles += "\"serial\":null,";
-                                else titles += $"\"serial\":{p.inventory.Serial},";
-
-                                if (p.patron == null) titles += $"\"name\":\"\"";
-                                else titles += $"\"name\":\"{p.patron.Name}\"";
-
-                                if (i==total) titles += "}";
-                                else titles += "},";
-
-                                i++;
-                            }
-
-                            titles += "\n]";*/
-
-                //System.Diagnostics.Debug.WriteLine(titles);
 
                 return Json(allTitlesQuery.ToArray());
             }
@@ -161,19 +121,22 @@ namespace LibraryWebServer.Controllers
         [HttpPost]
         public ActionResult ListMyBooks()
         {
-            Team107LibraryContext db = new Team107LibraryContext();
-            var myBookQuery = from books in db.Titles
-                              join inventory in db.Inventory on books.Isbn equals inventory.Isbn
-                              join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial
-                              join patron in db.Patrons on checkedout.CardNum equals patron.CardNum
-                              where patron.CardNum == card 
-                              select new
-                              {
-                                title = books.Title,
-                                author = books.Author,
-                                serial = inventory.Serial,
-                              };
-            return Json( myBookQuery.ToArray() );
+            using (Team107LibraryContext db = new Team107LibraryContext())
+            {
+                var myBookQuery = from books in db.Titles
+                                  join inventory in db.Inventory on books.Isbn equals inventory.Isbn
+                                  join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial
+                                  join patron in db.Patrons on checkedout.CardNum equals patron.CardNum
+                                  where patron.CardNum == card
+                                  select new
+                                  {
+                                      title = books.Title,
+                                      author = books.Author,
+                                      serial = inventory.Serial,
+                                  };
+
+                return Json(myBookQuery.ToArray());
+            }
         }
 
 
@@ -204,9 +167,20 @@ namespace LibraryWebServer.Controllers
         [HttpPost]
         public ActionResult ReturnBook( int serial )
         {
-            // You may have to cast serial to a (uint)
+            using (Team107LibraryContext db = new Team107LibraryContext())
+            {
+                var returnBookQuery = from books in db.Titles
+                                      join inventory in db.Inventory on books.Isbn equals inventory.Isbn
+                                      join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial
+                                      join patron in db.Patrons on checkedout.CardNum equals patron.CardNum
+                                      where inventory.Serial == (uint)serial && patron.CardNum == card
+                                      select checkedout;
 
-            return Json( new { success = true } );
+                db.CheckedOut.RemoveRange(returnBookQuery);
+                db.SaveChanges();
+
+                return Json(new { success = true });
+            }
         }
 
 

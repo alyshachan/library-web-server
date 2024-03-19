@@ -86,60 +86,67 @@ namespace LibraryWebServer.Controllers
         {
 
             // TODO: Implement
-            string titles = "[";
-            Team107LibraryContext db = new Team107LibraryContext();
-
-            //left outer joined all tables
-            var allTitlesQuery = from books in db.Titles
-                                 join inventory in db.Inventory on books.Isbn equals inventory.Isbn into join1
-                                 from inventory in join1.DefaultIfEmpty()
-                                 join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial into join2
-                                 from checkedout in join2.DefaultIfEmpty()
-                                 join patron in db.Patrons on checkedout.CardNum equals patron.CardNum into join3
-                                 from patron in join3.DefaultIfEmpty()
-                                 select new
-                                 {
-                                     books,
-                                     inventory,
-                                     patron
-                                 };
-            int i = 0;
-            int total = allTitlesQuery.Count()-1;
-            foreach (var p in allTitlesQuery) 
+            //string titles = "[";
+            //Team107LibraryContext db = new Team107LibraryContext();
+            using (Team107LibraryContext db = new Team107LibraryContext())
             {
 
-                /*                System.Diagnostics.Debug.WriteLine(p.books.Title);
-                                System.Diagnostics.Debug.WriteLine(p.books.Isbn);
-                                System.Diagnostics.Debug.WriteLine(p.books.Author);
-                                if (p.inventory== null) System.Diagnostics.Debug.WriteLine("no serial");
-                                else Debug.WriteLine(p.inventory.Serial);
-                                if (p.patron == null) System.Diagnostics.Debug.WriteLine("no patron checked it out");
-                                else System.Diagnostics.Debug.WriteLine(p.patron.Name);
-                                System.Diagnostics.Debug.WriteLine("\n");*/
 
-                titles += "{";
 
-                titles += $"\"isbn\":\"{p.books.Isbn}\",";
-                titles += $"\"title\":\"{p.books.Title}\",";
-                titles += $"\"author\":\"{p.books.Author}\",";
+                //left outer joined all tables
+                var allTitlesQuery = from books in db.Titles
+                                     join inventory in db.Inventory on books.Isbn equals inventory.Isbn into join1
+                                     from inventory in join1.DefaultIfEmpty()
+                                     join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial into join2
+                                     from checkedout in join2.DefaultIfEmpty()
+                                     join patron in db.Patrons on checkedout.CardNum equals patron.CardNum into join3
+                                     from patron in join3.DefaultIfEmpty()
+                                     select new
+                                     {
+                                         isbn = books.Isbn,
+                                         title = books.Title,
+                                         author = books.Author,
+                                         serial = inventory.Serial == null ? null : (uint?)inventory.Serial,
+                                         name = patron.Name == null ? "" : (String)patron.Name
+                                     };
+                /*            int i = 0;
+                            int total = allTitlesQuery.Count()-1;
+                            foreach (var p in allTitlesQuery) 
+                            {
 
-                if (p.inventory == null) titles += "\"serial\":null,";
-                else titles += $"\"serial\":{p.inventory.Serial},";
+                                *//*                System.Diagnostics.Debug.WriteLine(p.books.Title);
+                                                System.Diagnostics.Debug.WriteLine(p.books.Isbn);
+                                                System.Diagnostics.Debug.WriteLine(p.books.Author);
+                                                if (p.inventory== null) System.Diagnostics.Debug.WriteLine("no serial");
+                                                else Debug.WriteLine(p.inventory.Serial);
+                                                if (p.patron == null) System.Diagnostics.Debug.WriteLine("no patron checked it out");
+                                                else System.Diagnostics.Debug.WriteLine(p.patron.Name);
+                                                System.Diagnostics.Debug.WriteLine("\n");*//*
 
-                if (p.patron == null) titles += $"\"name\":\"\"";
-                else titles += $"\"name\":\"{p.patron.Name}\"";
+                                titles += "\n{";
 
-                if (i==total) titles += "}";
-                else titles += "},";
+                                titles += $"\"isbn\":\"{p.books.Isbn}\",";
+                                titles += $"\"title\":\"{p.books.Title}\",";
+                                titles += $"\"author\":\"{p.books.Author}\",";
 
-                i++;
+                                if (p.inventory == null) titles += "\"serial\":null,";
+                                else titles += $"\"serial\":{p.inventory.Serial},";
+
+                                if (p.patron == null) titles += $"\"name\":\"\"";
+                                else titles += $"\"name\":\"{p.patron.Name}\"";
+
+                                if (i==total) titles += "}";
+                                else titles += "},";
+
+                                i++;
+                            }
+
+                            titles += "\n]";*/
+
+                //System.Diagnostics.Debug.WriteLine(titles);
+
+                return Json(allTitlesQuery.ToArray());
             }
-
-            titles += "]";
-
-            System.Diagnostics.Debug.WriteLine(titles);
-
-            return Json( titles );
 
         }
 

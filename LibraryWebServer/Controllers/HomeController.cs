@@ -18,7 +18,6 @@ namespace LibraryWebServer.Controllers
 
         private readonly ILogger<HomeController> _logger;
 
-
         /// <summary>
         /// Given a Patron name and CardNum, verify that they exist and match in the database.
         /// If the login is successful, sets the global variables "user" and "card"
@@ -31,8 +30,21 @@ namespace LibraryWebServer.Controllers
         [HttpPost]
         public IActionResult CheckLogin( string name, int cardnum )
         {
-            // TODO: Fill in. Determine if login is successful or not.
             bool loginSuccessful = false;
+
+            Team107LibraryContext db = new Team107LibraryContext();
+
+            //check if the name and cardnum exists in the db via var userQuery
+            var userQuery = from patron in db.Patrons
+                            where patron.Name == name 
+                            && patron.CardNum == cardnum
+                            select patron;
+
+            foreach(var patron in userQuery) 
+            {
+
+                if (patron.Name == name && patron.CardNum == cardnum) { loginSuccessful = true; break; }
+            }
 
             if ( !loginSuccessful )
             {
@@ -74,8 +86,60 @@ namespace LibraryWebServer.Controllers
         {
 
             // TODO: Implement
+            string titles = "[";
+            Team107LibraryContext db = new Team107LibraryContext();
 
-            return Json( null );
+            //left outer joined all tables
+            var allTitlesQuery = from books in db.Titles
+                                 join inventory in db.Inventory on books.Isbn equals inventory.Isbn into join1
+                                 from inventory in join1.DefaultIfEmpty()
+                                 join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial into join2
+                                 from checkedout in join2.DefaultIfEmpty()
+                                 join patron in db.Patrons on checkedout.CardNum equals patron.CardNum into join3
+                                 from patron in join3.DefaultIfEmpty()
+                                 select new
+                                 {
+                                     books,
+                                     inventory,
+                                     patron
+                                 };
+            int i = 0;
+            int total = allTitlesQuery.Count()-1;
+            foreach (var p in allTitlesQuery) 
+            {
+
+                /*                System.Diagnostics.Debug.WriteLine(p.books.Title);
+                                System.Diagnostics.Debug.WriteLine(p.books.Isbn);
+                                System.Diagnostics.Debug.WriteLine(p.books.Author);
+                                if (p.inventory== null) System.Diagnostics.Debug.WriteLine("no serial");
+                                else Debug.WriteLine(p.inventory.Serial);
+                                if (p.patron == null) System.Diagnostics.Debug.WriteLine("no patron checked it out");
+                                else System.Diagnostics.Debug.WriteLine(p.patron.Name);
+                                System.Diagnostics.Debug.WriteLine("\n");*/
+
+                titles += "{";
+
+                titles += $"isbn:{p.books.Isbn},";
+                titles += $"title:{p.books.Title},";
+                titles += $"author:{p.books.Author},";
+
+                if (p.inventory == null) titles += "serial:null,";
+                else titles += $"serial:{p.inventory.Serial},";
+
+                if (p.patron == null) titles += $"name:\"\"";
+                else titles += $"name:{p.patron.Name}";
+
+                if (i==total) titles += "}";
+                else titles += "},";
+
+                i++;
+            }
+
+            titles += "]";
+
+            System.Diagnostics.Debug.WriteLine(titles);
+
+            return Json( titles );
 
         }
 

@@ -161,8 +161,19 @@ namespace LibraryWebServer.Controllers
         [HttpPost]
         public ActionResult ListMyBooks()
         {
-            // TODO: Implement
-            return Json( null );
+            Team107LibraryContext db = new Team107LibraryContext();
+            var myBookQuery = from books in db.Titles
+                              join inventory in db.Inventory on books.Isbn equals inventory.Isbn
+                              join checkedout in db.CheckedOut on inventory.Serial equals checkedout.Serial
+                              join patron in db.Patrons on checkedout.CardNum equals patron.CardNum
+                              where patron.CardNum == card 
+                              select new
+                              {
+                                title = books.Title,
+                                author = books.Author,
+                                serial = inventory.Serial,
+                              };
+            return Json( myBookQuery.ToArray() );
         }
 
 

@@ -119,15 +119,15 @@ namespace LibraryWebServer.Controllers
 
                 titles += "{";
 
-                titles += $"isbn:{p.books.Isbn},";
-                titles += $"title:{p.books.Title},";
-                titles += $"author:{p.books.Author},";
+                titles += $"\"isbn\":\"{p.books.Isbn}\",";
+                titles += $"\"title\":\"{p.books.Title}\",";
+                titles += $"\"author\":\"{p.books.Author}\",";
 
-                if (p.inventory == null) titles += "serial:null,";
-                else titles += $"serial:{p.inventory.Serial},";
+                if (p.inventory == null) titles += "\"serial\":null,";
+                else titles += $"\"serial\":{p.inventory.Serial},";
 
-                if (p.patron == null) titles += $"name:\"\"";
-                else titles += $"name:{p.patron.Name}";
+                if (p.patron == null) titles += $"\"name\":\"\"";
+                else titles += $"\"name\":\"{p.patron.Name}\"";
 
                 if (i==total) titles += "}";
                 else titles += "},";

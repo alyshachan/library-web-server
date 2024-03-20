@@ -152,9 +152,15 @@ namespace LibraryWebServer.Controllers
         public ActionResult CheckOutBook( int serial )
         {
             // You may have to cast serial to a (uint)
-
-
-            return Json( new { success = true } );
+            using (Team107LibraryContext db = new Team107LibraryContext())
+            {
+                CheckedOut newCheckOut = new CheckedOut();
+                newCheckOut.CardNum = (uint)card;
+                newCheckOut.Serial = (uint)serial;
+                db.CheckedOut.Add(newCheckOut);
+                db.SaveChanges();
+                return Json(new { success = true });
+            }
         }
 
         /// <summary>
@@ -182,7 +188,6 @@ namespace LibraryWebServer.Controllers
                 return Json(new { success = true });
             }
         }
-
 
         /*******************************************/
         /****** Do not modify below this line ******/
